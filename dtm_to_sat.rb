@@ -4,11 +4,10 @@ load 'sat.rb'
 class DTM_TO_SAT
 
   def initialize(dtm = nil)
-    dtm = DTM.new() unless dtm
-    @dtm = dtm     
-    @pn = 5*1 #input length
-    @r = dtm.states.length-1
-    @v = dtm.symbols.length-1
+    @dtm = dtm || DTM.new()     
+    @pn = 5 #input length factor
+    @r = @dtm.states.length-1
+    @v = @dtm.symbols.length-1
   end
 
   def sat_format
@@ -67,19 +66,10 @@ class DTM_TO_SAT
   def clause_group_six
     result = (0..@pn).map{|i| (0..@pn+1).map{|j| (0..@v).map{|l| "!S[#{i};#{j};#{l}] H[#{i};#{j}] S[#{i+1};#{j};#{l}]"}.join(", ") }.join(", ") }.join(", ")
 
-
     result += ', ' + (0..@pn-1).map{|i| (0..@pn+1).map{|j| (0..@r).map{|k| (0..@v).map{|l|
-      delta = translate_dtm_step(k,l).last
-      "!S[#{i};#{j};#{l}] !H[#{i};#{j}] !Q[#{i};#{k}] H[#{i+1};#{j+delta}]"
-      }.join(", ") }.join(", ") }.join(", ") }.join(", ")
-    
-    result += ', ' + (0..@pn-1).map{|i| (0..@pn+1).map{|j| (0..@r).map{|k| (0..@v).map{|l|
-      k_prime = translate_dtm_step(k,l).first
-      "!S[#{i};#{j};#{l}] !H[#{i};#{j}] !Q[#{i};#{k}] Q[#{i+1};#{k_prime}]"
-      }.join(", ") }.join(", ") }.join(", ") }.join(", ")
-    
-    result + ', ' + (0..@pn-1).map{|i| (0..@pn+1).map{|j| (0..@r).map{|k| (0..@v).map{|l|
-      l_prime = translate_dtm_step(k,l)[1]
+      k_prime, l_prime, delta = translate_dtm_step(k,l)
+      "!S[#{i};#{j};#{l}] !H[#{i};#{j}] !Q[#{i};#{k}] H[#{i+1};#{j+delta}]" + ", " +
+      "!S[#{i};#{j};#{l}] !H[#{i};#{j}] !Q[#{i};#{k}] Q[#{i+1};#{k_prime}]" + ", " +
       "!S[#{i};#{j};#{l}] !H[#{i};#{j}] !Q[#{i};#{k}] S[#{i+1};#{j};#{l_prime}]"
       }.join(", ") }.join(", ") }.join(", ") }.join(", ")
   end
